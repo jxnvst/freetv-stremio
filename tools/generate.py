@@ -85,10 +85,9 @@ def main():
         "logo": f"{BASE}/logo/AndTV.in",
         "resources": ["catalog", "stream"],
         "types": ["tv"],
-        "catalogs": [{"type": "tv", "id": "all", "name": "FreeTV · All US"}]
+        "catalogs": [{"type": "tv", "id": "all", "name": "FreeTV · All US", "extraSupported": ["search","genre"]}]
                   + [{"type": "tv", "id": c, "name": c.capitalize()} for c in CATS],
-        "idPrefixes": ["free-"],
-        "behaviorHints": {"configurable": False}
+        "idPrefixes": ["free-"]
     }
     with open(os.path.join(OUT, "manifest.json"), "w") as f:
         json.dump(manifest, f, separators=(",", ":"))
