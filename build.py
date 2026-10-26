@@ -240,7 +240,6 @@ def emit_configure():
             f.write(script)
     # root landing + configure
     with open(os.path.join(SITE, "index.html"), "w") as f:
-        stem = cfg_dir("720p")
         f.write(f"""<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>FreeTV Live for Stremio</title><style>
 body{{margin:0;background:#121A33;color:#E8ECF6;font:400 16px/1.5 system-ui,sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh}}
@@ -248,18 +247,34 @@ body{{margin:0;background:#121A33;color:#E8ECF6;font:400 16px/1.5 system-ui,sans
 h1{{font-size:30px;margin:0 0 8px}} p{{color:#98A2C2}}
 a.btn{{display:inline-block;background:#F2C230;color:#1B1500;text-decoration:none;font-weight:600;padding:14px 22px;border-radius:12px;margin:20px 8px 0}}
 a.ghost{{display:inline-block;background:transparent;border:1px solid #2A3663;color:#E8ECF6;text-decoration:none;font-weight:600;padding:14px 22px;border-radius:12px;margin:20px 8px 0}}
-code{{display:block;margin-top:24px;font-size:12px;color:#98A2C2;word-break:break-all}}</style></head>
+code{{display:block;margin-top:24px;font-size:13px;color:#98A2C2;word-break:break-all}}
+.steps{{text-align:left;margin-top:28px;font-size:14px;color:#C6CDF2}} .steps b{{color:#E8ECF6}}</style></head>
 <body><div class="card"><h1>FreeTV Live for Stremio</h1>
-<p>Free US live TV channels — 24 categories, browser-playable, online only. Install the addon in Stremio, then configure which rows you see on Home.</p>
-<a class="btn" href="{stem}/configure/">Configure addon</a>
-<a class="ghost" href="{stem}/manifest.json">Direct install link</a>
-<code>https://jxnvst.github.io/freetv-stremio/{stem}/manifest.json</code>
+<p>Free US live TV — 24 categories, browser-playable, online only, multiple streams per channel.</p>
+<a class="btn" href="./configure/">Configure addon</a>
+<code>https://jxnvst.github.io/freetv-stremio/manifest.json</code>
+<div class="steps">
+<b>Install:</b> open Stremio &rarr; Addons &rarr; Install from URL &rarr; paste the link above.<br>
+<b>Same on PC, phone, LG &amp; TCL:</b> install once while logged in and it syncs to every device.
+</div>
 </div></body></html>""")
     os.makedirs(os.path.join(SITE, "configure"), exist_ok=True)
     with open(os.path.join(SITE, "configure", "index.html"), "w") as f:
         f.write(script.replace("CATEGORIES_JSON", json.dumps(CATEGORIES)).replace("ROWS_JSON", json.dumps(ROWS)))
     with open(os.path.join(SITE, "configure.html"), "w") as f:
-        f.write('<meta http-equiv="refresh" content="0;url=/freetv-stremio/configure/">')
+        f.write('<meta http-equiv="refresh" content="0;url=./configure/">')
+    # default addon AT THE ROOT so the install link is short: <host>/manifest.json
+    default_tree = os.path.join(SITE, cfg_dir("720p"))
+    import shutil as _sh
+    for entry in ["manifest.json", "catalog", "stream", "meta"]:
+        src = os.path.join(default_tree, entry)
+        dst = os.path.join(SITE, entry)
+        if os.path.isdir(src):
+            if os.path.exists(dst):
+                _sh.rmtree(dst)
+            _sh.copytree(src, dst)
+        else:
+            _sh.copy2(src, dst)
 
 if __name__ == "__main__":
     for q in ["720p", "1080p"]:
