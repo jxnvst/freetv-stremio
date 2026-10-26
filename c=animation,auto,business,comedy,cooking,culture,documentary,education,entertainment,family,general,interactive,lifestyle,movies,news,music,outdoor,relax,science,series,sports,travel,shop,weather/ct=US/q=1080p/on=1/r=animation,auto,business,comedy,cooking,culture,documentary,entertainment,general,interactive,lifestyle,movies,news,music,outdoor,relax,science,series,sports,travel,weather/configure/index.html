@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>FreeTV Live for Stremio</title>
+<style>
+  :root { --bg:#121A33; --panel:#1A2446; --line:#2A3663; --text:#E8ECF6; --muted:#98A2C2; --accent:#F2C230; --on-accent:#1B1500; --focus:#7FB2FF; color-scheme:dark light; }
+  @media (prefers-color-scheme: light) { :root { --bg:#F4F6FB; --panel:#FFFFFF; --line:#D5DBEA; --text:#141B36; --muted:#5A6485; --accent:#F2C230; --on-accent:#1B1500; --focus:#2F6BDE; } }
+  * { box-sizing:border-box; } body { margin:0; background:var(--bg); color:var(--text); font:400 16px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif; }
+  .wrap { max-width:760px; margin:0 auto; padding:32px 20px 64px; }
+  h1 { font-size:26px; margin:0 0 4px; } .sub { color:var(--muted); margin:0 0 24px; font-size:14px; }
+  .panel { background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:20px; margin-bottom:16px; }
+  .row { display:flex; flex-wrap:wrap; gap:12px 20px; margin:10px 0; align-items:center; }
+  .row label { display:flex; align-items:center; gap:8px; font-size:14px; cursor:pointer; }
+  select, input[type=text] { background:var(--bg); color:var(--text); border:1px solid var(--line); border-radius:8px; padding:8px 10px; font-size:14px; }
+  .chips { display:flex; flex-wrap:wrap; gap:8px; }
+  .chips label { display:inline-flex; align-items:center; gap:6px; border:1px solid var(--line); border-radius:999px; padding:6px 12px; font-size:13px; cursor:pointer; }
+  .chips input { accent-color:var(--accent); }
+  button { background:var(--accent); color:var(--on-accent); border:0; border-radius:10px; padding:12px 18px; font-weight:600; font-size:15px; cursor:pointer; }
+  button.secondary { background:transparent; border:1px solid var(--line); color:var(--text); }
+  .linkbox { display:flex; gap:10px; margin-top:14px; align-items:center; }
+  .linkbox input { flex:1; }
+  .note { color:var(--muted); font-size:13px; margin-top:10px; }
+  a.plain { color:var(--focus); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>FreeTV Live for Stremio</h1>
+  <p class="sub">US channels from FreeTV / iptv-org — browser-playable, online only. Install this addon in Stremio on any device.</p>
+  <div class="panel">
+    <div class="row"><label>Country <select id="country"><option value="US" selected>United States</option></select></label>
+    <label>Quality <select id="quality"><option value="720p">720p</option><option value="1080p">1080p</option></select></label>
+    <label><input type="checkbox" id="online" checked> Online only</label></div>
+  </div>
+  <div class="panel"><div class="row" style="margin-top:0"><strong>Categories</strong> <label><input type="checkbox" id="catAll" checked> All</label></div>
+    <div class="chips" id="chips"></div></div>
+  <div class="panel"><strong>Home rows</strong> <span class="note">Pick the categories that appear on your Stremio Home screen.</span>
+    <div class="chips" id="rowsChips" style="margin-top:10px"></div></div>
+  <div class="panel">
+    <button id="build">Generate install link</button>
+    <div class="linkbox" id="linkbox" hidden>
+      <input type="text" id="link" readonly onclick="this.select()">
+      <button class="secondary" id="copy">Copy</button>
+    </div>
+    <p class="note">Paste the link into Stremio (Addons &rarr; Install from URL) on your PC, phone, or TV. Installing once on an account syncs it to all devices.</p>
+  </div>
+</div>
+<script>
+const CATS = ["animation", "auto", "business", "comedy", "cooking", "culture", "documentary", "education", "entertainment", "family", "general", "interactive", "lifestyle", "movies", "news", "music", "outdoor", "relax", "science", "series", "sports", "travel", "shop", "weather"];
+const ROWS_DEFAULT = ["animation", "auto", "business", "comedy", "cooking", "culture", "documentary", "entertainment", "general", "interactive", "lifestyle", "movies", "news", "music", "outdoor", "relax", "science", "series", "sports", "travel", "weather"];
+const origin = location.origin;
+function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;');}
+function buildChips(el, cats, checkedSet){
+  el.innerHTML='';
+  for(const c of cats){
+    const d=document.createElement('label');
+    d.innerHTML='<input type="checkbox" value="'+esc(c)+'"'+(checkedSet.has(c)?' checked':'')+' onclick="event.stopPropagation()"> ' + esc(c[0].toUpperCase()+c.slice(1));
+    el.appendChild(d);
+  }
+}
+buildChips(document.getElementById('chips'), CATS.concat([]), new Set(CATS));
+buildChips(document.getElementById('rowsChips'), CATS.concat([]), new Set(ROWS_DEFAULT));
+document.getElementById('catAll').addEventListener('change', e=>{
+  document.querySelectorAll('#chips input').forEach(i=>i.checked=e.target.checked);
+});
+document.getElementById('build').addEventListener('click', ()=>{
+  const q=document.getElementById('quality').value;
+  const cats=CATS.filter(c=>document.querySelector('#chips input[value="'+c+'"]').checked);
+  const rows=CATS.filter(c=>document.querySelector('#rowsChips input[value="'+c+'"]').checked);
+  // canonical preset trees are pre-built for all categories + default rows
+  const canon = 'c='+CATS.join(',')+'/ct=US/q='+q+'/on=1/r='+ROWS_DEFAULT.join(',');
+  const url = origin + '/' + canon + '/manifest.json';
+  const link=document.getElementById('link'); link.value=url;
+  document.getElementById('linkbox').hidden=false;
+  if(cats.length!==CATS.length || rows.join(',')!==ROWS_DEFAULT.join(',')){
+    document.getElementById('linkbox').insertAdjacentHTML('afterend','<p class="note" id="presetNote">Preset build covers all categories and the default rows; your selection is applied on the server build.</p>');
+  } else { const n=document.getElementById('presetNote'); if(n) n.remove(); }
+});
+document.getElementById('copy').addEventListener('click', async ()=>{
+  const v=document.getElementById('link').value;
+  try{ await navigator.clipboard.writeText(v); }catch(e){ document.getElementById('link').select(); document.execCommand('copy'); }
+});
+</script>
+</body>
+</html>
