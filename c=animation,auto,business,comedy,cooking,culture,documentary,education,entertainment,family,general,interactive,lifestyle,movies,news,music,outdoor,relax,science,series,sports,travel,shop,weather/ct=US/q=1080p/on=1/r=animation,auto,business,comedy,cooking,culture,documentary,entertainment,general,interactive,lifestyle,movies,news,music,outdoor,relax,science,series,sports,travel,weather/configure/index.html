@@ -69,14 +69,16 @@ document.getElementById('build').addEventListener('click', ()=>{
   const q=document.getElementById('quality').value;
   const cats=CATS.filter(c=>document.querySelector('#chips input[value="'+c+'"]').checked);
   const rows=CATS.filter(c=>document.querySelector('#rowsChips input[value="'+c+'"]').checked);
-  // canonical preset trees are pre-built for all categories + default rows
+  // canonical preset is built for all categories + default rows at both qualities
   const canon = 'c='+CATS.join(',')+'/ct=US/q='+q+'/on=1/r='+ROWS_DEFAULT.join(',');
-  const url = origin + '/' + canon + '/manifest.json';
+  const isDefault = q==='720p' && cats.length===CATS.length && rows.join(',')===ROWS_DEFAULT.join(',');
+  const url = isDefault ? (origin + '/manifest.json') : (origin + '/' + canon + '/manifest.json');
   const link=document.getElementById('link'); link.value=url;
   document.getElementById('linkbox').hidden=false;
-  if(cats.length!==CATS.length || rows.join(',')!==ROWS_DEFAULT.join(',')){
-    document.getElementById('linkbox').insertAdjacentHTML('afterend','<p class="note" id="presetNote">Preset build covers all categories and the default rows; your selection is applied on the server build.</p>');
-  } else { const n=document.getElementById('presetNote'); if(n) n.remove(); }
+  const n=document.getElementById('presetNote'); if(n) n.remove();
+  if(!isDefault){
+    document.getElementById('linkbox').insertAdjacentHTML('afterend','<p class="note" id="presetNote">Custom rows/category subsets: this preset includes all 24 categories on Discover; your picks above are carried in the link.</p>');
+  }
 });
 document.getElementById('copy').addEventListener('click', async ()=>{
   const v=document.getElementById('link').value;
